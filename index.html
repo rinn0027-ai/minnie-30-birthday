@@ -767,6 +767,18 @@
         ctx.textAlign='center'; ctx.textBaseline='middle';
         ctx.fillText('💕', W/2, player.y-40);
       }
+      // dancing: a birthday banner floating above their heads
+      if (dancing) {
+        const ty = player.y - 62 + Math.sin(frame*0.14)*3;
+        ctx.save();
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.font = 'bold 13px "PingFang TC","Microsoft JhengHei",sans-serif';
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fillText('生日快樂 Minnie！', W/2+1, ty+1);   // shadow
+        ctx.fillStyle = 'hsl(' + ((frame*4)%360) + ',90%,72%)'; // rainbow
+        ctx.fillText('生日快樂 Minnie！', W/2, ty);
+        ctx.restore();
+      }
     }
 
     // floating hearts (kiss)
