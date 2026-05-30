@@ -235,6 +235,24 @@
     const notes = [523,659,784,1046,784,1046,1318];
     notes.forEach((f,i)=> setTimeout(()=>beep(f,0.22,'square',0.18), i*150));
   }
+  // "Happy Birthday" melody (public domain) — plays during the dance finale
+  function playBirthdaySong() {
+    const a = audio(); if (!a) return 0;
+    const beat = 0.36;
+    const song = [
+      ['G4',0.5],['G4',0.5],['A4',1],['G4',1],['C5',1],['B4',2],
+      ['G4',0.5],['G4',0.5],['A4',1],['G4',1],['D5',1],['C5',2],
+      ['G4',0.5],['G4',0.5],['G5',1],['E5',1],['C5',1],['B4',1],['A4',1],
+      ['F5',0.5],['F5',0.5],['E5',1],['C5',1],['D5',1],['C5',2]
+    ];
+    let t = a.currentTime + 0.06;
+    song.forEach(s => {
+      const f = N[s[0]], dur = s[1]*beat;
+      if (f) { schedNote(f, t, dur*0.92, 'square', 0.09); schedNote(f/2, t, dur*0.92, 'triangle', 0.05); }
+      t += dur;
+    });
+    return t - a.currentTime;
+  }
 
   // ---------- Game state ----------
   const TARGET = 30;
@@ -247,8 +265,10 @@
   let floaters = [];    // floating hearts/emojis (kiss scene)
   // intro animation
   let introX = -24, introArrived = false, introArriveFrame = 0;
-  // ending kiss animation
+  // ending cutscene (kiss -> kids -> birthday song -> dance)
   let kissFrame = 0, kissMinnieX = 0, kissManX = 0;
+  let girlX = -30, boyX = 210;
+  let endSongStarted = false, endDanceFrame = 0, endSongFrames = 0;
   let spawnTimer = 0, spawnGap = 52;
   let speedBase = 1.0;
   let frame = 0;
@@ -332,16 +352,17 @@
     state = 'kiss';
     kissFrame = 0;
     items = [];
-    kissMinnieX = W/2 - 42;
-    kissManX = W/2 + 42;
-    winFanfare();
-    for (let i=0;i<60;i++) spawnConfetti();
+    kissMinnieX = W/2 - 42; kissManX = W/2 + 42;
+    girlX = -30; boyX = W + 30;
+    endSongStarted = false; endDanceFrame = 0; endSongFrames = 0;
+    for (let i=0;i<20;i++) spawnConfetti();
   }
   function showWinPanel(){
     state = 'win';
     show(winPanel);
     polaroid.classList.toggle('show', photoReady); // family photo if loaded
     for (let i=0;i<120;i++) spawnConfetti();
+    startBGM(); // resume the cheerful loop behind the birthday card
   }
 
   // ---------- Spawning ----------
@@ -452,17 +473,38 @@
       }
     }
 
-    // kiss cutscene: pixel Minnie + pixel "you" lean in, hearts pop, then win panel
+    // ending cutscene: kiss -> kids run in -> Happy Birthday song -> everyone dances
     if (state==='kiss') {
       kissFrame++;
+      // phase A: the couple walk together and kiss
       const t = Math.min(1, kissFrame/55);
       const ease = t*t*(3-2*t);
       kissMinnieX = (W/2-42) + ease*29;   // -> W/2-13
       kissManX    = (W/2+42) - ease*29;   // -> W/2+13
       if (kissFrame === 56) { for (let i=0;i<14;i++) floatHeart(W/2, player.y-30); beep(660,0.12,'triangle',0.16); }
-      if (kissFrame > 56 && kissFrame % 14 === 0) { floatHeart(W/2, player.y-34); }
-      if (kissFrame % 6 === 0 && kissFrame > 56) spawnConfetti();
-      if (kissFrame > 175) showWinPanel();
+      if (kissFrame > 56 && kissFrame < 108 && kissFrame % 16 === 0) floatHeart(W/2, player.y-34);
+
+      // phase B: the two kids run in from the left and right edges
+      if (kissFrame >= 110) {
+        const kt = Math.min(1, (kissFrame-110)/55);
+        const ke = kt*kt*(3-2*kt);
+        girlX = -30 + ke*70;        // -> 40 (left)
+        boyX  = (W+30) - ke*70;     // -> 140 (right)
+      }
+
+      // phase C: everyone's together -> play Happy Birthday + start dancing
+      if (kissFrame === 168 && !endSongStarted) {
+        endSongStarted = true;
+        bgmRunning = false;                 // pause loop so the song is clear
+        endSongFrames = Math.ceil(playBirthdaySong()*60);
+        endDanceFrame = kissFrame;
+        for (let i=0;i<30;i++) spawnConfetti();
+      }
+      if (endSongStarted) {
+        if (kissFrame % 8 === 0) spawnConfetti();
+        if (kissFrame % 18 === 0) floatHeart(16+Math.random()*148, player.y-18, Math.random()<0.5?'🎵':'🎶');
+        if (kissFrame > endDanceFrame + endSongFrames + 24) showWinPanel();
+      }
     }
 
     // particles
@@ -554,18 +596,73 @@
     px(-13,-1,4,3,'#e8b98f'); px(9,-1,4,3,'#e8b98f');  // hands
     // head / face
     px(-8,-30,16,16,'#e8b98f');
-    // keffiyeh (red & white checkered)
-    px(-9,-35,18,10,'#f5f5f5');
-    for(let i=-9;i<9;i+=4) for(let j=-35;j<-27;j+=4){ if(((i+j)>>2 & 1)===0) px(i,j,2,2,'#d23a3a'); }
-    px(-9,-27,4,13,'#f5f5f5'); px(5,-27,4,13,'#f5f5f5'); // side drapes
-    px(-9,-25,4,2,'#d23a3a'); px(5,-22,4,2,'#d23a3a');
-    px(-9,-33,18,2,'#222');                              // agal band
+    // black hair (short, neat)
+    px(-9,-32,18,6,'#1b1712');
+    px(-9,-32,3,10,'#1b1712'); px(6,-32,3,10,'#1b1712');
+    px(-9,-32,18,2,'#2f2820');                           // hair sheen
+    px(-6,-31,6,2,'#1b1712');                            // little fringe
     // round glasses
     px(-7,-24,6,6,'#1c1c1c'); px(1,-24,6,6,'#1c1c1c');
     px(-6,-23,4,4,'#cdeefe'); px(2,-23,4,4,'#cdeefe');
     px(-1,-22,2,1,'#1c1c1c');
     // smile
     px(-2,-17,5,2,'#9c5436');
+    ctx.restore();
+  }
+
+  // Pixel daughter — pigtails, white skirt + black top (from the photo)
+  function drawGirl(cx, cy, bob){
+    const x = (cx==null?0:cx)|0, y = ((cy==null?player.y:cy)+(bob||0))|0;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.fillStyle='rgba(0,0,0,0.22)';
+    ctx.beginPath(); ctx.ellipse(0, 13, 11, 3, 0,0,Math.PI*2); ctx.fill();
+    // legs (white tights) + shoes
+    px(-5,4,4,9,'#f0eef5'); px(1,4,4,9,'#f0eef5');
+    px(-6,12,5,3,'#ffffff'); px(1,12,5,3,'#ffffff');
+    // dress: black top + white skirt
+    px(-7,-2,14,8,'#fafafa'); px(-7,-2,14,2,'#e7c6da');
+    px(-6,-10,12,9,'#2a2a30');
+    // arms
+    px(-9,-8,3,7,'#ffd9b3'); px(6,-8,3,7,'#ffd9b3');
+    // head
+    px(-6,-22,12,12,'#ffd9b3');
+    // black hair + pigtails
+    px(-7,-24,14,6,'#241a14');
+    px(-7,-22,3,8,'#241a14'); px(4,-22,3,8,'#241a14');
+    px(-10,-20,3,7,'#241a14'); px(7,-20,3,7,'#241a14');   // pigtails
+    px(-10,-20,3,2,'#ff7ac8'); px(7,-20,3,2,'#ff7ac8');   // hair ties
+    // eyes / blush / smile
+    px(-3,-17,2,3,'#2a1a12'); px(2,-17,2,3,'#2a1a12');
+    px(-4,-13,2,1,'#ff9ec7'); px(3,-13,2,1,'#ff9ec7');
+    px(-1,-13,3,1,'#c1416e');
+    ctx.restore();
+  }
+
+  // Pixel son — beige cap, hoodie + vest, jeans (from the photo)
+  function drawBoy(cx, cy, bob){
+    const x = (cx==null?0:cx)|0, y = ((cy==null?player.y:cy)+(bob||0))|0;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.fillStyle='rgba(0,0,0,0.22)';
+    ctx.beginPath(); ctx.ellipse(0, 13, 11, 3, 0,0,Math.PI*2); ctx.fill();
+    // legs (jeans) + shoes
+    px(-5,4,4,9,'#3f5b7a'); px(1,4,4,9,'#3f5b7a');
+    px(-6,12,5,3,'#eaeaea'); px(1,12,5,3,'#eaeaea');
+    // body: light hoodie + blue vest
+    px(-6,-10,12,14,'#a6b6c8');
+    px(-5,-9,10,12,'#3a4a63');
+    // arms
+    px(-9,-8,3,8,'#a6b6c8'); px(6,-8,3,8,'#a6b6c8');
+    // head
+    px(-6,-22,12,12,'#ffd9b3');
+    // black hair peeking + beige cap
+    px(-6,-21,12,2,'#241a14');
+    px(-7,-26,14,5,'#cdb892'); px(-7,-26,14,2,'#dcc8a2');
+    px(-11,-22,5,2,'#cdb892');                            // cap brim
+    // eyes / smile
+    px(-3,-17,2,3,'#2a1a12'); px(2,-17,2,3,'#2a1a12');
+    px(-1,-13,3,1,'#a05a3a');
     ctx.restore();
   }
 
@@ -651,9 +748,18 @@
       drawPlayer(introX, player.y, bob);
     }
     if (state==='kiss') {
-      drawMan(kissManX, player.y, 0);
-      drawPlayer(kissMinnieX, player.y, 0);
-      if (kissFrame > 50) {
+      const dancing = endSongStarted;
+      const hop  = (ph)=> dancing ? -Math.abs(Math.sin(frame*0.32+ph))*4 : 0;
+      const sway = (ph)=> dancing ? Math.sin(frame*0.32+ph)*2 : 0;
+      // kids, once they begin entering
+      if (kissFrame >= 108) {
+        drawGirl(girlX+sway(0.5), player.y, hop(0));
+        drawBoy(boyX+sway(2.0), player.y, hop(Math.PI));
+      }
+      drawMan(kissManX+sway(1.0), player.y, hop(Math.PI/2));
+      drawPlayer(kissMinnieX+sway(2.6), player.y, hop(Math.PI*1.5));
+      // heart between the couple, before the kids/dance
+      if (kissFrame > 50 && !dancing) {
         const s = 16 + 3*Math.sin(frame*0.3);
         ctx.font = (s|0)+'px serif';
         ctx.textAlign='center'; ctx.textBaseline='middle';
