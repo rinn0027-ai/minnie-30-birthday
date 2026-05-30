@@ -490,8 +490,8 @@
       if (kissFrame >= 110) {
         const kt = Math.min(1, (kissFrame-110)/55);
         const ke = kt*kt*(3-2*kt);
-        girlX = -30 + ke*70;        // -> 40 (left)
-        boyX  = (W+30) - ke*70;     // -> 140 (right)
+        girlX = -30 + ke*82;        // -> 52 (left, next to Minnie)
+        boyX  = (W+30) - ke*82;     // -> 128 (right, next to dad)
       }
 
       // phase C: everyone's together -> play Happy Birthday + start dancing
@@ -641,32 +641,33 @@
     ctx.restore();
   }
 
-  // Pixel son — beige cap, hoodie + vest, jeans (from the photo)
+  // Pixel son — chibi toddler: short body, BIG head, beige cap, hoodie+vest, jeans
   function drawBoy(cx, cy, bob){
     const x = (cx==null?0:cx)|0, y = ((cy==null?player.y:cy)+(bob||0))|0;
     ctx.save();
     ctx.translate(x, y);
-    // little brother — about one head shorter than his big sister (scale from the feet)
-    ctx.translate(0, 14); ctx.scale(0.72, 0.72); ctx.translate(0, -14);
+    // shadow (feet sit on the same ground line as everyone else)
     ctx.fillStyle='rgba(0,0,0,0.22)';
-    ctx.beginPath(); ctx.ellipse(0, 13, 11, 3, 0,0,Math.PI*2); ctx.fill();
-    // legs (jeans) + shoes
-    px(-5,4,4,9,'#3f5b7a'); px(1,4,4,9,'#3f5b7a');
-    px(-6,12,5,3,'#eaeaea'); px(1,12,5,3,'#eaeaea');
-    // body: light hoodie + blue vest
-    px(-6,-10,12,14,'#a6b6c8');
-    px(-5,-9,10,12,'#3a4a63');
-    // arms
-    px(-9,-8,3,8,'#a6b6c8'); px(6,-8,3,8,'#a6b6c8');
-    // head
-    px(-6,-22,12,12,'#ffd9b3');
-    // black hair peeking + beige cap
-    px(-6,-21,12,2,'#241a14');
-    px(-7,-26,14,5,'#cdb892'); px(-7,-26,14,2,'#dcc8a2');
-    px(-11,-22,5,2,'#cdb892');                            // cap brim
-    // eyes / smile
-    px(-3,-17,2,3,'#2a1a12'); px(2,-17,2,3,'#2a1a12');
-    px(-1,-13,3,1,'#a05a3a');
+    ctx.beginPath(); ctx.ellipse(0, 13, 9, 3, 0,0,Math.PI*2); ctx.fill();
+    // short legs (jeans) + shoes
+    px(-5,8,4,6,'#3f5b7a'); px(1,8,4,6,'#3f5b7a');
+    px(-6,13,5,2,'#eaeaea'); px(1,13,5,2,'#eaeaea');
+    // short torso: light hoodie + blue vest
+    px(-6,1,12,7,'#a6b6c8');
+    px(-5,2,10,6,'#3a4a63');
+    // little arms
+    px(-9,2,3,6,'#a6b6c8'); px(6,2,3,6,'#a6b6c8');
+    // BIG head
+    px(-8,-12,16,14,'#ffd9b3');
+    // beige cap (dome + brim) + black hair fringe
+    px(-8,-16,16,5,'#cdb892'); px(-8,-16,16,2,'#dcc8a2');
+    px(-12,-12,5,2,'#cdb892');                 // brim to the side
+    px(-7,-12,14,2,'#241a14');                 // fringe
+    // big cute eyes / blush / smile
+    px(-4,-6,3,4,'#2a1a12'); px(2,-6,3,4,'#2a1a12');
+    px(-4,-6,1,2,'#ffffff'); px(2,-6,1,2,'#ffffff'); // eye shine
+    px(-6,-1,2,2,'#ffb38f'); px(5,-1,2,2,'#ffb38f'); // blush
+    px(-1,-1,3,2,'#a05a3a');                    // smile
     ctx.restore();
   }
 
