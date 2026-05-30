@@ -298,10 +298,12 @@
   let targetX = player.x;
   const keys = {};
   function skipIntro(){ if (state==='intro'){ introArrived = true; state='start'; show(startPanel); } }
+  function skipEnding(){ if (state==='kiss'){ showWinPanel(); } } // tap/key to jump to the card
   window.addEventListener('keydown', e => {
     keys[e.key] = true;
     if ((e.key === ' ' || e.key === 'Enter')) {
       if (state==='intro') skipIntro();
+      else if (state==='kiss') skipEnding();
       else if (state==='start') startGame();
       else if (state==='over' || state==='win') restart();
     }
@@ -313,10 +315,10 @@
     return (clientX - r.left) / r.width * W;
   }
   let dragging = false;
-  canvas.addEventListener('touchstart', e => { skipIntro(); dragging = true; targetX = pointerX(e.touches[0].clientX); e.preventDefault(); }, {passive:false});
+  canvas.addEventListener('touchstart', e => { skipIntro(); skipEnding(); dragging = true; targetX = pointerX(e.touches[0].clientX); e.preventDefault(); }, {passive:false});
   canvas.addEventListener('touchmove',  e => { if(dragging) targetX = pointerX(e.touches[0].clientX); e.preventDefault(); }, {passive:false});
   canvas.addEventListener('touchend',   e => { dragging = false; e.preventDefault(); }, {passive:false});
-  canvas.addEventListener('mousedown',  e => { skipIntro(); dragging = true; targetX = pointerX(e.clientX); });
+  canvas.addEventListener('mousedown',  e => { skipIntro(); skipEnding(); dragging = true; targetX = pointerX(e.clientX); });
   window.addEventListener('mousemove',  e => { if(dragging) targetX = pointerX(e.clientX); });
   window.addEventListener('mouseup',    () => dragging = false);
 
@@ -806,8 +808,15 @@
   }
 
   function loop(){
-    update();
-    render();
+    try {
+      update();
+      render();
+    } catch (err) {
+      // never let one bad frame freeze the game forever
+      console.error('loop error:', err);
+      document.title = '⚠ ' + ((err && err.message) || err);
+      if (state==='kiss') { try { showWinPanel(); } catch(e){} }
+    }
     requestAnimationFrame(loop);
   }
   loop();
