@@ -644,6 +644,8 @@
     const x = (cx==null?0:cx)|0, y = ((cy==null?player.y:cy)+(bob||0))|0;
     ctx.save();
     ctx.translate(x, y);
+    // little brother — about one head shorter than his big sister (scale from the feet)
+    ctx.translate(0, 14); ctx.scale(0.72, 0.72); ctx.translate(0, -14);
     ctx.fillStyle='rgba(0,0,0,0.22)';
     ctx.beginPath(); ctx.ellipse(0, 13, 11, 3, 0,0,Math.PI*2); ctx.fill();
     // legs (jeans) + shoes
