@@ -298,7 +298,15 @@
   let targetX = player.x;
   const keys = {};
   function skipIntro(){ if (state==='intro'){ introArrived = true; state='start'; show(startPanel); } }
-  function skipEnding(){ if (state==='kiss'){ showWinPanel(); } } // tap/key to jump to the card
+  // Tap/key during the ending. The family dance is the whole point, so a stray
+  // tap must never hide it: the first tap only fast-forwards the kiss/kids
+  // build-up to the dance, and jumping to the card is allowed only once a couple
+  // of seconds of dancing have actually been seen.
+  function skipEnding(){
+    if (state!=='kiss') return;
+    if (!endSongStarted){ if (kissFrame < 168) kissFrame = 167; return; } // FF to the dance
+    if (kissFrame > endDanceFrame + 120) showWinPanel();                  // then to the card
+  }
   window.addEventListener('keydown', e => {
     keys[e.key] = true;
     if ((e.key === ' ' || e.key === 'Enter')) {
