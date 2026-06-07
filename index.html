@@ -497,9 +497,15 @@
       // phase C: everyone's together -> play Happy Birthday + start dancing
       if (kissFrame === 168 && !endSongStarted) {
         endSongStarted = true;
-        bgmRunning = false;                 // pause loop so the song is clear
-        endSongFrames = Math.ceil(playBirthdaySong()*60);
         endDanceFrame = kissFrame;
+        endSongFrames = 540;                 // guaranteed dance length (~9s) even if audio fails
+        bgmRunning = false;                  // pause loop so the song is clear
+        // The song is a bonus — never let an audio hiccup (common on the very
+        // first play, before the AudioContext is warm) abort the dance finale.
+        try {
+          const songSec = playBirthdaySong();
+          if (songSec > 0) endSongFrames = Math.max(540, Math.ceil(songSec*60));
+        } catch(e){ /* dance on regardless */ }
         for (let i=0;i<30;i++) spawnConfetti();
       }
       if (endSongStarted) {
@@ -813,10 +819,11 @@
       update();
       render();
     } catch (err) {
-      // never let one bad frame freeze the game forever
+      // never let one bad frame freeze the game forever — log and keep going.
+      // (Do NOT skip to the win card during the cutscene: the kiss/dance is
+      //  frame-timed and advances on its own, so swallowing a stray error here
+      //  preserves the full family-dance finale instead of cutting it short.)
       console.error('loop error:', err);
-      document.title = '⚠ ' + ((err && err.message) || err);
-      if (state==='kiss') { try { showWinPanel(); } catch(e){} }
     }
     requestAnimationFrame(loop);
   }
